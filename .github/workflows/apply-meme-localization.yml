@@ -1,0 +1,43 @@
+name: Apply War Thunder meme localization
+
+on:
+  push:
+    branches: [meme-localization]
+
+jobs:
+  edit:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply confirmed in-match localization') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Edit only confirmed gameplay strings
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("menu.csv")
+          b = p.read_bytes()
+          changes = {
+              b'"hitcamera/result/ricochet";"Ricochet"': b'"hitcamera/result/ricochet";"BOUNCED"',
+              b'"hitcamera/result/bounce";"Non-penetration"': b'"hitcamera/result/bounce";"ARMOR SAID NO"',
+              b'"hitcamera/result/hit";"Hit"': b'"hitcamera/result/hit";"TOUCHED"',
+              b'"hitcamera/result/burn";"Fire"': b'"hitcamera/result/burn";"SEND IT"',
+              b'"hitcamera/result/critical";"Critical Hit"': b'"hitcamera/result/critical";"HARASSED"',
+              b'"hitcamera/result/kill";"Destroyed"': b'"hitcamera/result/kill";"DELETED"',
+              b'"hitcamera/result/crew";"Crew knocked out"': b'"hitcamera/result/crew";"THE BOYS ARE GONE"',
+          }
+          for old, new in changes.items():
+              if b.count(old) != 1:
+                  raise SystemExit(f"Expected exactly one occurrence of {old!r}, found {b.count(old)}")
+              b = b.replace(old, new, 1)
+          p.write_bytes(b)
+          print("Applied:", len(changes), "confirmed gameplay changes")
+          PY
+      - name: Commit edited file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add menu.csv
+          git commit -m "Apply confirmed in-match localization"
+          git push

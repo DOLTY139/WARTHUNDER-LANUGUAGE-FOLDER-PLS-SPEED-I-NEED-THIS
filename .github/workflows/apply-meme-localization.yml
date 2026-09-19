@@ -40,4 +40,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add menu.csv
           git commit -m "Apply confirmed in-match localization"
-          git push
+          git pull --rebase origin meme-localization
+          git push origin meme-localization
